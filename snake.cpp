@@ -12,8 +12,6 @@ const int game_height = 30;
 WINDOW *game_Board; //게임 칸
 WINDOW *mission_Board; //미션 칸
 WINDOW *score_Board; //점수 칸
-int coin_timer = 0, poison_timer = 0, gate_timer = 0;
-
 
 snakepart::snakepart(int col, int row) {
     x = col;
@@ -68,33 +66,22 @@ snakeclass::snakeclass() {
     gate_1.y = 0;
     gate_2.x = 0;
     gate_2.y = 0;
+    coin_timer = 0;
+    poison_timer = 0;
+    gate_timer = 0;
+    points = 0, minus_points = 0, mission_points = 0, mission_minus = 0;
+    mission_Level = 0; // 미션 0단계
     for (int i = 0; i < 3; i++)
         snake.push_back(snakepart(40 + i, 10));
     points = 0, minus_points = 0;
-    for(int i = 0; i < 30; i++){
-        for(int j = 0; j < 60; j++){
-            if(map[i][j] == 1)
-                wallidx.push_back(snakepart(j,i));
-        }
-    }
-    wattron(game_Board, COLOR_PAIR(1));
-    for(int i = 0; i < wallidx.size(); i++){
-        wmove(game_Board, wallidx[i].y, wallidx[i].x);
-        waddch(game_Board, '@');
-    }
-    wattroff(game_Board, COLOR_PAIR(1));
-    wrefresh(game_Board);
+    read_map();
+
     //del = 110000;
-    del = 100000; //0.5초
-    get_coin = 0;
+    del = 100000; //1초
+    get_coin = false;
     direction = 'l';
-    pass_gate = 0;
+    pass_gate = false;
     srand(time(NULL));
-
-
-//    int random_item = rand() % 2 + 1; // 1 or 2
-//    if(random_item == 1) put_Coin();
-//    else put_Posion();
     put_Coin();
     put_Posion();
     put_Gate();
@@ -104,7 +91,6 @@ snakeclass::snakeclass() {
         wmove(game_Board, snake[i].y, snake[i].x);
         waddch(game_Board, partchar);
     }
-
     wrefresh(game_Board);
 
     score_Board = newwin(10, 40, 0, 62); //스코어 보드 윈도우 사이즈와 포지션 설정
@@ -122,7 +108,7 @@ snakeclass::snakeclass() {
     //w가 붙는 이유는 특정 window를 위한 함수이기 때문이다.
     wbkgd(mission_Board, COLOR_PAIR(2)); //스코어 보드 윈도우 백그라운드 적용
     wattron(mission_Board, COLOR_PAIR(1));
-    mvwprintw(mission_Board, 1, 1, "This is mission board");
+    mvwprintw(mission_Board, 1, 1, "mission board");
     wborder(mission_Board, '-', '-', '-', '-', '+', '+', '+', '+');
     wrefresh(mission_Board);
 }
@@ -208,12 +194,12 @@ void snakeclass::put_Gate(){
     }
     wattron(game_Board, COLOR_PAIR(4));
     wmove(game_Board, gate_1.y, gate_1.x);
-    waddch(game_Board,'1');  //gate items
+    waddch(game_Board,' ');  //gate items
     wattroff(game_Board, COLOR_PAIR(4));//gate1
 
     wattron(game_Board, COLOR_PAIR(4));
     wmove(game_Board, gate_2.y, gate_2.x);
-    waddch(game_Board, '2');
+    waddch(game_Board, ' ');
     wattroff(game_Board, COLOR_PAIR(4));//gate2
     wrefresh(game_Board);
 
@@ -249,36 +235,22 @@ bool snakeclass::collision() {
                 direction = 'l';
             }
             else{ //벽이 맵 중앙에 있을때
-                if(direction == 'l'){ //진출방향이 왼쪽일때 , 왼쪽 -> 시계(위) -> 반시계(아래) -> 역방향(오)
-                    // int arrow[4][2] = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}};
-                    // for(int i =0; i < 4; i++){
-                    //     if(!map[gate_2.y + arrow[i][0]][gate_2.x+arrow[i][1]]){
-                    //         snake[0].x = gate_2.x+arrow[i][1];
-                    //         snake[0].y = gate_2.y+arrow[i][0];
-                    //         break;
-                    //     }
-                    // }
-
+                if(direction == 'l'){
                     if(map[gate_2.y][gate_2.x-1] != 1){ //왼
-                        //snake[0].x = gate_2.x-1;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                     }
                     else if(map[gate_2.y-1][gate_2.x] != 1){ //위
                         snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y-1;
                         snake[0].y = gate_2.y;
                         direction = 'u';
                     }
                     else if(map[gate_2.y+1][gate_2.x] != 1){ //아래
                         snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y+1;
                         snake[0].y = gate_2.y;
                         direction = 'd';
                     }
                     else if(map[gate_2.y][gate_2.x+1] != 1){ //오른쪽
-                        //snake[0].x = gate_2.x+1;
-                        //snake[0].y = gate_2.y;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'r';
@@ -286,29 +258,21 @@ bool snakeclass::collision() {
                 }
                 else if(direction == 'u'){//위 -> 오른쪽 -> 왼쪽 -> 아
                     if(map[gate_2.y-1][gate_2.x] != 1){ //위
-                        //snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y-1;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
 
                     }
                     else if(map[gate_2.y][gate_2.x+1] != 1){ //오른쪽
-                        //snake[0].x = gate_2.x+1;
-                        //snake[0].y = gate_2.y;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'r';
                     }
                     else if(map[gate_2.y][gate_2.x-1] != 1){ //왼
-                        //snake[0].x = gate_2.x-1;
-                        //snake[0].y = gate_2.y;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'l';
                     }
                     else if(map[gate_2.y+1][gate_2.x] != 1){//아래
-                        //snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y+1;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'd';
@@ -316,28 +280,20 @@ bool snakeclass::collision() {
                 }
                 else if(direction == 'd'){//아레 -> 왼쪽 -> 오른쪽 -> 위
                     if(map[gate_2.y+1][gate_2.x] != 1){//아래
-                        //snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y+1;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                     }
                     else if(map[gate_2.y][gate_2.x-1] != 1){ //왼
-                        //snake[0].x = gate_2.x-1;
-                        //snake[0].y = gate_2.y;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'l';
                     }
                     else if(map[gate_2.y][gate_2.x+1] != 1){ //오른쪽
-                        //snake[0].x = gate_2.x+1;
-                        //snake[0].y = gate_2.y;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'r';
                     }
                     else if(map[gate_2.y-1][gate_2.x] != 1){ //위
-                        //snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y-1;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'u';
@@ -345,29 +301,21 @@ bool snakeclass::collision() {
                 }
                 else if(direction == 'r'){//오른쪽 -> 아래 -> 위 -> 왼쪽
                     if(map[gate_2.y][gate_2.x+1] != 1){ //오른쪽
-                        //snake[0].x = gate_2.x+1;
-                        //snake[0].y = gate_2.y;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
 
                     }
                     else if(map[gate_2.y+1][gate_2.x] != 1){//아래
-                        //snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y+1;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'd';
                     }
                     else if(map[gate_2.y-1][gate_2.x] != 1){ //위
-                        //snake[0].x = gate_2.x;
-                        //snake[0].y = gate_2.y-1;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'u';
                     }
                     else if(map[gate_2.y][gate_2.x-1] != 1){ //왼
-                        //snake[0].x = gate_2.x-1;
-                        //snake[0].y = gate_2.y;
                         snake[0].x = gate_2.x;
                         snake[0].y = gate_2.y;
                         direction = 'l';
@@ -489,12 +437,12 @@ bool snakeclass::collision() {
     if(pass_gate){
         wattron(game_Board, COLOR_PAIR(4));
         wmove(game_Board, gate_1.y, gate_1.x);
-        waddch(game_Board,'1');  //gate items
+        waddch(game_Board,' ');  //gate items
         wattroff(game_Board, COLOR_PAIR(4));//gate1
 
         wattron(game_Board, COLOR_PAIR(4));
         wmove(game_Board, gate_2.y, gate_2.x);
-        waddch(game_Board, '2');
+        waddch(game_Board, ' ');
         wattroff(game_Board, COLOR_PAIR(4));//gate2
         wrefresh(game_Board);
     }
@@ -503,26 +451,29 @@ bool snakeclass::collision() {
         if (snake[0].x == snake[i].x && snake[0].y == snake[i].y)
             return true;
     }
-    //if(snake[snakesize()].x == )
-    //collision with the coin
+
+    //코인과 부딪힐 때
     if (snake[0].x == coin.x && snake[0].y == coin.y) {
         get_coin = true;
         map[coin.y][coin.x] = 0;
         put_Coin();
         coin_timer = 0;
         points++;
+        mission_points++;
         mvwprintw(score_Board, 2, 6, "%d", snake.size() + 1);
         mvwprintw(score_Board, 3, 6, "%d", points);
         wrefresh(score_Board);
+        wrefresh(mission_Board);
     } else
         get_coin = false;
 
-    //collision with the poison
+    //독과 부딪혔을 때
     if (snake[0].x == poison.x && snake[0].y == poison.y) {
         map[poison.y][poison.x] = 0;
         put_Posion();
         poison_timer = 0;
         minus_points++;
+        mission_minus++;
         wmove(game_Board, snake[snake.size() - 1].y, snake[snake.size() - 1].x);
         wprintw(game_Board, " ");
         snake.pop_back();
@@ -531,8 +482,105 @@ bool snakeclass::collision() {
         mvwprintw(score_Board, 2, 6, "%d", snake.size());
         mvwprintw(score_Board, 4, 6, "%d", minus_points);
         wrefresh(score_Board);
+        wrefresh(mission_Board);
     }
     return false;
+}
+
+void snakeclass::read_map(){
+    for(int i = 0; i < wallidx.size(); i++){
+        wmove(game_Board, wallidx[i].y, wallidx[i].x);
+        waddch(game_Board, ' ');
+    }
+
+    for(int i = 0; i < wallidx.size(); i++){
+        wallidx.pop_back();
+    }
+
+    for(int i = 0; i < 30; i++){
+        for(int j = 0; j < 60; j++){
+            if(map[i][j] == 1)
+                wallidx.push_back(snakepart(j,i));
+        }
+    }
+    wattron(game_Board, COLOR_PAIR(1));
+
+    for(int i = 0; i < wallidx.size(); i++){
+        wmove(game_Board, wallidx[i].y, wallidx[i].x);
+        waddch(game_Board, '@');
+    }
+    wattroff(game_Board, COLOR_PAIR(1));
+
+    wrefresh(game_Board);
+}
+
+void snakeclass::pass_Mission(){
+    switch (mission_Level){
+        case 0: //1단계
+            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
+            mvwprintw(mission_Board, 2, 2, "B : 5 (%d) ", snake.size());
+            mvwprintw(mission_Board, 3, 2, "+ : 2 (%d)", mission_points);
+            mvwprintw(mission_Board, 4, 2, "- : 1 (%d)", mission_minus);
+            mvwprintw(mission_Board, 5, 2, "G : 1 (%c)", pass_char);
+            if(snake.size() >= 5 || mission_points >= 1 || mission_minus >= 1 || mission_gate >= 1){
+                mission_Level = 1, mission_points = 0, mission_minus = 0, mission_gate = 0;
+                for(int i = 0; i < 30; i++){
+                    for(int j = 0; j < 60; j++){
+                        map[i][j] = map1[i][j];
+                    }
+                }
+                read_map();
+                put_Gate();
+            }
+            break;
+
+        case 1:
+            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
+            mvwprintw(mission_Board, 2, 2, "B : 7 (%d) ", snake.size());
+            mvwprintw(mission_Board, 3, 2, "+ : 4 (%d)", mission_points);
+            mvwprintw(mission_Board, 4, 2, "- : 2 (%d)", mission_minus);
+            mvwprintw(mission_Board, 5, 2, "G : 2 (%c)", pass_char);
+
+            if(snake.size() >= 7 || mission_points >= 1 || mission_minus >= 1 || mission_gate >= 2){
+                mission_Level = 2, mission_points = 0, mission_minus = 0, mission_gate = 0;
+                for(int i = 0; i < 30; i++){
+                    for(int j = 0; j < 60; j++){
+                        map[i][j] = map2[i][j];
+                    }
+                }
+                read_map();
+                put_Gate();
+            }
+            break;
+
+        case 2:
+            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
+            mvwprintw(mission_Board, 2, 2, "B : 10 (%d) ", snake.size());
+            mvwprintw(mission_Board, 3, 2, "+ : 5 (%d)", mission_points);
+            mvwprintw(mission_Board, 4, 2, "- : 2 (%d)", mission_minus);
+            mvwprintw(mission_Board, 5, 2, "G : 2 (%c)", pass_char);
+
+            if(snake.size() >= 7 || mission_points >= 1 || mission_minus >= 1 || mission_gate >= 2){
+                mission_Level = 3, mission_points = 0, mission_minus = 0, mission_gate = 0;
+                for(int i = 0; i < 30; i++){
+                    for(int j = 0; j < 60; j++){
+                        map[i][j] = map3[i][j];
+                    }
+                }
+                read_map();
+                put_Gate();
+            }
+            break;
+        case 3:
+            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
+            mvwprintw(mission_Board, 2, 2, "B : 12 (%d) ", snake.size());
+            mvwprintw(mission_Board, 3, 2, "+ : 5 (%d)", mission_points);
+            mvwprintw(mission_Board, 4, 2, "- : 2 (%d)", mission_minus);
+            mvwprintw(mission_Board, 5, 2, "G : 2 (%c)", pass_char);
+
+    }
+    wrefresh(game_Board);
+    wrefresh(mission_Board);
 }
 
 void snakeclass::passing_Gate(){
@@ -547,7 +595,7 @@ void snakeclass::passing_Gate(){
         wmove(game_Board, gate_2.y, gate_2.x);
         waddch(game_Board, '@');
         wattroff(game_Board, COLOR_PAIR(1));//gate2
-        points++;
+        mission_gate++;
         mvwprintw(score_Board, 3, 6, "%d", points);
         wrefresh(game_Board);
         map[gate_1.y][gate_1.x] = 1;
@@ -567,7 +615,7 @@ void snakeclass::passing_Gate(){
         wmove(game_Board, gate_2.y, gate_2.x);
         waddch(game_Board, '@');
         wattroff(game_Board, COLOR_PAIR(1));//gate2
-        points++;
+        mission_gate++;
         mvwprintw(score_Board, 3, 6, "%d", points);
         wrefresh(game_Board);
         map[gate_1.y][gate_1.x] = 1;
@@ -605,17 +653,17 @@ void snakeclass::movesnake() {
 
     if (!get_coin) {
         if(map[snake[snake.size()-1].y][snake[snake.size()-1].x] == 1){
-            attron(COLOR_PAIR(1));
-            move(snake[snake.size() - 1].y, snake[snake.size() - 1].x);
-            printw("@");
-            attroff(COLOR_PAIR(1));
-            refresh();
+            wattron(game_Board, COLOR_PAIR(1));
+            wmove(game_Board, snake[snake.size() - 1].y, snake[snake.size() - 1].x);
+            wprintw(game_Board, "@");
+            wattroff(game_Board, COLOR_PAIR(1));
+            wrefresh(game_Board);
             snake.pop_back();
         }
         else{
-            move(snake[snake.size() - 1].y, snake[snake.size() - 1].x);
-            printw(" ");
-            refresh();
+            wmove(game_Board, snake[snake.size() - 1].y, snake[snake.size() - 1].x);
+            wprintw(game_Board ," ");
+            wrefresh(game_Board);
             snake.pop_back();
         }
     }
@@ -647,6 +695,7 @@ void snakeclass::start() {
         if (direction == 'q')
             break;
         passing_Gate();
+        pass_Mission();
 
 
         #ifdef WIN32
@@ -670,7 +719,7 @@ void snakeclass::start() {
             put_Posion();
             poison_timer = 0;
         }
-        if(gate_timer % 200 == 0){ //초기화
+        if(gate_timer % 100 == 0){ //초기화
           wattron(game_Board, COLOR_PAIR(1));
           wmove(game_Board, gate_1.y, gate_1.x); //gate1 초기
           wprintw(game_Board, "@");
