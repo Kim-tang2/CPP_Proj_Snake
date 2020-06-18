@@ -4,8 +4,6 @@
 
 using namespace std;
 
-//const int maxwidth = 100;
-//const int maxheight = 40;
 const int game_width = 60;
 const int game_height = 30;
 
@@ -72,15 +70,15 @@ snakeclass::snakeclass() {
     gate_timer = 0;
     points = 0, minus_points = 0, mission_points = 0, mission_minus = 0;
     mission_Level = 0; // 미션 0단계
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++) //스네이크 좌표
         snake.push_back(snakepart(40 + i, 10));
     points = 0, minus_points = 0;
     read_map();
 
     //del = 110000;
-    del = 70000; //1초
+    del = 100000; //1초
     get_coin = false;
-    direction = 'l';
+    direction = 'l'; //방향 정하는 부분
     pass_gate = false;
     srand(time(NULL));
     put_Coin();
@@ -98,10 +96,6 @@ snakeclass::snakeclass() {
     //w가 붙는 이유는 특정 window를 위한 함수이기 때문이다.
     wbkgd(score_Board, COLOR_PAIR(2)); //스코어 보드 윈도우 백그라운드 적용
     wattron(score_Board, COLOR_PAIR(1));
-    mvwprintw(score_Board, 1, 2, "score board");
-    mvwprintw(score_Board, 2, 2, "B : %d", snake.size());
-    mvwprintw(score_Board, 3, 2, "+ : 0");
-    mvwprintw(score_Board, 4, 2, "- : 0");
     wborder(score_Board, '-', '-', '-', '-', '+', '+', '+', '+');
     wrefresh(score_Board);
 
@@ -178,7 +172,7 @@ void snakeclass::put_Posion() {
 void snakeclass::put_Gate() {
 
     while (1) {
-        int gate1_idx = rand() % (wallidx.size());
+        int gate1_idx = rand() % (wallidx.size()); //벽이 있는 좌표 x랑 y좌표
         int gate2_idx = rand() % (wallidx.size());
         if (gate1_idx == gate2_idx) {//2개의 게이트 x,y좌표가 똑같지 않게
             continue;
@@ -209,9 +203,15 @@ void snakeclass::put_Gate() {
 
 bool snakeclass::collision() {
     //벽에 부딪히면
-    if (map[snake[0].y][snake[0].x] == 1) {
-        return true;
+    for(int i = 0; i < snake.size() - 1; i++){ //벽에 만나면 죽는 코드
+        if(map[snake[i].y][snake[i].x] == 1){
+            return true;
+        }
     }
+
+//    if (map[snake[0].y][snake[0].x] == 1) {
+//        return true;
+//    }
     if (map[snake[0].y][snake[0].x] == 7) { //게이트로가면
         if (snake[0].x == gate_1.x && snake[0].y == gate_1.y) { // gate1에 들어가면
             //기능 수행, 나오는곳은 gate2, gate2 의 위치에따라 4분할 (상단,하단,좌측,우측)
@@ -422,8 +422,10 @@ bool snakeclass::collision() {
         coin_timer = 0;
         points++;
         mission_points++;
+        total_points = total_points + 2;
         mvwprintw(score_Board, 2, 6, "%d", snake.size() + 1);
         mvwprintw(score_Board, 3, 6, "%d", points);
+        mvwprintw(score_Board, 6, 16, "%d", total_points);
         wrefresh(score_Board);
         wrefresh(mission_Board);
     } else
@@ -436,13 +438,14 @@ bool snakeclass::collision() {
         poison_timer = 0;
         minus_points++;
         mission_minus++;
+        total_points = total_points - 1;
         wmove(game_Board, snake[snake.size() - 1].y, snake[snake.size() - 1].x);
         wprintw(game_Board, " ");
         snake.pop_back();
         wrefresh(game_Board);
-
         mvwprintw(score_Board, 2, 6, "%d", snake.size());
         mvwprintw(score_Board, 4, 6, "%d", minus_points);
+        mvwprintw(score_Board, 6, 16, "%d", total_points);
         wrefresh(score_Board);
         wrefresh(mission_Board);
     }
@@ -459,7 +462,7 @@ void snakeclass::read_map() {
         wallidx.pop_back();
     }
 
-    for (int i = 0; i < 30; i++) {
+    for (int i = 0; i < 30; i++) { //map.h에서 2차원 배열을 통해 벽의 위치를 저장하는 코드
         for (int j = 0; j < 60; j++) {
             if (map[i][j] == 1)
                 wallidx.push_back(snakepart(j, i));
@@ -467,7 +470,7 @@ void snakeclass::read_map() {
     }
     wattron(game_Board, COLOR_PAIR(1));
 
-    for (int i = 0; i < wallidx.size(); i++) {
+    for (int i = 0; i < wallidx.size(); i++) { //wallidx 벡터의 크기 만큼 돌려서 해당 위치에 벽 설치
         wmove(game_Board, wallidx[i].y, wallidx[i].x);
         waddch(game_Board, '@');
     }
@@ -477,12 +480,19 @@ void snakeclass::read_map() {
 }
 
 void snakeclass::pass_Mission() {
+    mvwprintw(score_Board, 1, 2, "score board");
+    mvwprintw(score_Board, 2, 2, "B : (%d) ", snake.size());
+    mvwprintw(score_Board, 3, 2, "+ : (%d) ", points);
+    mvwprintw(score_Board, 4, 2, "- : (%d) ", minus_points);
+    mvwprintw(score_Board, 6, 2, "Total Score : (%d) ", total_points);
+    wrefresh(score_Board);
+    mvwprintw(mission_Board, 9, 1, "MISSION LEVEL : %d", mission_Level + 1);
     switch (mission_Level) {
         case 0: //1단계
-            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
+
             mvwprintw(mission_Board, 2, 2, "B : 4 (%d) ", snake.size());
-            mvwprintw(mission_Board, 3, 2, "+ : 2 (%d)", mission_points);
-            mvwprintw(mission_Board, 4, 2, "- : 1 (%d)", mission_minus);
+            mvwprintw(mission_Board, 3, 2, "+ : 2 (%d) ", mission_points);
+            mvwprintw(mission_Board, 4, 2, "- : 1 (%d) ", mission_minus);
             mvwprintw(mission_Board, 5, 2, "G : 1 ( )");
             if (mission_gate >= 1) {
                 mvwprintw(mission_Board, 5, 2, "G : 1 (%c)", pass_char);
@@ -492,7 +502,7 @@ void snakeclass::pass_Mission() {
                 mvwprintw(mission_Board, 5, 2, "G : 1 ( )");
                 for (int i = 0; i < 30; i++) {
                     for (int j = 0; j < 60; j++) {
-                        map[i][j] = map1[i][j];
+                        map[i][j] = map1[i][j]; //맵 바꿔주는 것
                     }
                 }
                 read_map();
@@ -501,7 +511,7 @@ void snakeclass::pass_Mission() {
             break;
 
         case 1:
-            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
+
             mvwprintw(mission_Board, 2, 2, "B : 5 (%d) ", snake.size());
             mvwprintw(mission_Board, 3, 2, "+ : 3 (%d) ", mission_points);
             mvwprintw(mission_Board, 4, 2, "- : 2 (%d) ", mission_minus);
@@ -523,7 +533,7 @@ void snakeclass::pass_Mission() {
             break;
 
         case 2:
-            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
+
             mvwprintw(mission_Board, 2, 2, "B : 7 (%d) ", snake.size());
             mvwprintw(mission_Board, 3, 2, "+ : 4 (%d) ", mission_points);
             mvwprintw(mission_Board, 4, 2, "- : 3 (%d) ", mission_minus);
@@ -545,7 +555,6 @@ void snakeclass::pass_Mission() {
             }
             break;
         case 3:
-            mvwprintw(mission_Board, 9, 1, "%d", mission_Level);
             mvwprintw(mission_Board, 2, 2, "B : 9 (%d) ", snake.size());
             mvwprintw(mission_Board, 3, 2, "+ : 5 (%d) ", mission_points);
             mvwprintw(mission_Board, 4, 2, "- : 4 (%d) ", mission_minus);
@@ -578,7 +587,9 @@ void snakeclass::passing_Gate() {
         waddch(game_Board, '@');
         wattroff(game_Board, COLOR_PAIR(1));//gate2
         mission_gate++;
-        mvwprintw(score_Board, 3, 6, "%d", points);
+        total_points = total_points + 3; //게이트 통과는 3점
+        mvwprintw(score_Board, 6, 16, "%d", total_points);
+        wrefresh(score_Board);
         wrefresh(game_Board);
         map[gate_1.y][gate_1.x] = 1;
         map[gate_2.y][gate_2.x] = 1;
@@ -598,7 +609,9 @@ void snakeclass::passing_Gate() {
         waddch(game_Board, '@');
         wattroff(game_Board, COLOR_PAIR(1));//gate2
         mission_gate++;
-        mvwprintw(score_Board, 3, 6, "%d", points);
+        total_points = total_points + 3; //게이트 통과는 3점
+        mvwprintw(score_Board, 6, 16, "%d", total_points);
+        wrefresh(score_Board);
         wrefresh(game_Board);
         map[gate_1.y][gate_1.x] = 1;
         map[gate_2.y][gate_2.x] = 1;
@@ -615,18 +628,26 @@ void snakeclass::movesnake() {
         case KEY_LEFT:
             if (direction != 'r')
                 direction = 'l';
+            else
+                game_over = true;
             break;
         case KEY_UP:
             if (direction != 'd')
                 direction = 'u';
+            else
+                game_over = true;
             break;
         case KEY_DOWN:
             if (direction != 'u')
                 direction = 'd';
+            else
+                game_over = true;
             break;
         case KEY_RIGHT:
             if (direction != 'l')
                 direction = 'r';
+            else
+                game_over = true;
             break;
         case KEY_BACKSPACE:
             direction = 'q';
@@ -665,7 +686,7 @@ void snakeclass::movesnake() {
 
 void snakeclass::start() {
     while (1) {
-        if (collision() || snake.size() < 3) { //벽에 부딪히거나 스네이크 사이즈가 3보다 낮으면 사망
+        if (collision() || snake.size() < 3 || game_over) { //벽에 부딪히거나 스네이크 사이즈가 3보다 낮으면 사망
             wmove(game_Board, 12, 24); // y좌표 12랑 x좌표 24로 move
             wprintw(game_Board, "game_over"); //y : 12 x : 24에 gameover 출력
             wrefresh(game_Board); //wrefresh로 화면 새로고침 (게임보드)
@@ -675,9 +696,11 @@ void snakeclass::start() {
         if(game_complete){
             wmove(game_Board, 12, 24); // y좌표 12랑 x좌표 24로 move
             wprintw(game_Board, "Mission Complete!!!"); //y : 12 x : 24에 gameover 출력
+            mvwprintw(game_Board, 14, 24, "Total_Score = %d", total_points);
             wrefresh(game_Board); //wrefresh로 화면 새로고침 (게임보드)
             break;
         }
+
         movesnake(); //movesnake 실행
         if (direction == 'q')
             break;
@@ -692,21 +715,21 @@ void snakeclass::start() {
         poison_timer++; //독 타이머 시작
         gate_timer++;
 
-        if (coin_timer % 100 == 0) { //5초가 되면 실행
+        if (coin_timer % 50 == 0) { //5초가 되면 실행
             wmove(game_Board, coin.y, coin.x); //원래 코인이 있던 곳으로 좌표 옮김
             wprintw(game_Board, " "); // " " 공백으로 지워버려
             map[coin.y][coin.x] = 0;
             put_Coin();
             coin_timer = 0;
         }
-        if (poison_timer % 100 == 0) {
+        if (poison_timer % 50 == 0) {
             wmove(game_Board, poison.y, poison.x);
             wprintw(game_Board, " ");
             map[poison.y][poison.x] = 0;
             put_Posion();
             poison_timer = 0;
         }
-        if (gate_timer % 200 == 0) { //초기화
+        if (gate_timer % 100 == 0) { //초기화
             wattron(game_Board, COLOR_PAIR(1));
             wmove(game_Board, gate_1.y, gate_1.x); //gate1 초기
             wprintw(game_Board, "@");

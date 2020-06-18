@@ -20,9 +20,11 @@ class snakeclass {
     int coin_timer, poison_timer, gate_timer;
     int mission_points, mission_minus, mission_gate;
     int mission_Level;
+    int total_points;
     bool get_coin;
     bool pass_gate;
     bool game_complete;
+    bool game_over;
     char pass_char;
     char direction;
     char partchar;
