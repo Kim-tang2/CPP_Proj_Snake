@@ -71,7 +71,7 @@ snakeclass::snakeclass() {
     points = 0, minus_points = 0, mission_points = 0, mission_minus = 0;
     mission_Level = 0; // 미션 0단계
     for (int i = 0; i < 3; i++) //스네이크 좌표
-        snake.push_back(snakepart(40 + i, 10));
+        snake.push_back(snakepart(30 + i, 10));
     points = 0, minus_points = 0;
     read_map();
 
@@ -689,6 +689,7 @@ void snakeclass::start() {
         if (collision() || snake.size() < 3 || game_over) { //벽에 부딪히거나 스네이크 사이즈가 3보다 낮으면 사망
             wmove(game_Board, 12, 24); // y좌표 12랑 x좌표 24로 move
             wprintw(game_Board, "game_over"); //y : 12 x : 24에 gameover 출력
+            mvwprintw(game_Board, 14, 24, "Total_Score = %d", total_points);
             wrefresh(game_Board); //wrefresh로 화면 새로고침 (게임보드)
             break; //게임 종료
         }
