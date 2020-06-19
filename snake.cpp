@@ -68,6 +68,7 @@ snakeclass::snakeclass() {
     coin_timer = 0;
     poison_timer = 0;
     gate_timer = 0;
+    mission_gate = 0, total_points = 0;
     points = 0, minus_points = 0, mission_points = 0, mission_minus = 0;
     mission_Level = 0; // 미션 0단계
     for (int i = 0; i < 3; i++) //스네이크 좌표
@@ -491,13 +492,13 @@ void snakeclass::pass_Mission() {
         case 0: //1단계
 
             mvwprintw(mission_Board, 2, 2, "B : 4 (%d) ", snake.size());
-            mvwprintw(mission_Board, 3, 2, "+ : 2 (%d) ", mission_points);
+            mvwprintw(mission_Board, 3, 2, "+ : 1 (%d) ", mission_points);
             mvwprintw(mission_Board, 4, 2, "- : 1 (%d) ", mission_minus);
             mvwprintw(mission_Board, 5, 2, "G : 1 ( )");
             if (mission_gate >= 1) {
                 mvwprintw(mission_Board, 5, 2, "G : 1 (%c)", pass_char);
             }
-            if (snake.size() >= 4 && mission_points >= 2 && mission_minus >= 1 && mission_gate >= 1) {
+            if (snake.size() >= 4 && mission_points >= 1 && mission_minus >= 1 && mission_gate >= 1) {
                 mission_Level = 1, mission_points = 0, mission_minus = 0, mission_gate = 0;
                 mvwprintw(mission_Board, 5, 2, "G : 1 ( )");
                 for (int i = 0; i < 30; i++) {
@@ -513,13 +514,13 @@ void snakeclass::pass_Mission() {
         case 1:
 
             mvwprintw(mission_Board, 2, 2, "B : 5 (%d) ", snake.size());
-            mvwprintw(mission_Board, 3, 2, "+ : 3 (%d) ", mission_points);
+            mvwprintw(mission_Board, 3, 2, "+ : 2 (%d) ", mission_points);
             mvwprintw(mission_Board, 4, 2, "- : 2 (%d) ", mission_minus);
             mvwprintw(mission_Board, 5, 2, "G : 2 ( )");
             if (mission_gate >= 2) {
                 mvwprintw(mission_Board, 5, 2, "G : 2 (%c)", pass_char);
             }
-            if (snake.size() >= 5 && mission_points >= 3 && mission_minus >= 2 && mission_gate >= 2) {
+            if (snake.size() >= 5 && mission_points >= 2 && mission_minus >= 2 && mission_gate >= 2) {
                 mission_Level = 2, mission_points = 0, mission_minus = 0, mission_gate = 0;
                 mvwprintw(mission_Board, 5, 2, "G : 2 ( )");
                 for (int i = 0; i < 30; i++) {
@@ -534,15 +535,15 @@ void snakeclass::pass_Mission() {
 
         case 2:
 
-            mvwprintw(mission_Board, 2, 2, "B : 7 (%d) ", snake.size());
-            mvwprintw(mission_Board, 3, 2, "+ : 4 (%d) ", mission_points);
-            mvwprintw(mission_Board, 4, 2, "- : 3 (%d) ", mission_minus);
+            mvwprintw(mission_Board, 2, 2, "B : 6 (%d) ", snake.size());
+            mvwprintw(mission_Board, 3, 2, "+ : 2 (%d) ", mission_points);
+            mvwprintw(mission_Board, 4, 2, "- : 2 (%d) ", mission_minus);
             mvwprintw(mission_Board, 5, 2, "G : 2 ( )");
 
             if (mission_gate >= 2) {
                 mvwprintw(mission_Board, 5, 2, "G : 2 (%c)", pass_char);
             }
-            if (snake.size() >= 7 && mission_points >= 4 && mission_minus >= 3 && mission_gate >= 2) {
+            if (snake.size() >= 6 && mission_points >= 2 && mission_minus >= 2 && mission_gate >= 2) {
                 mission_Level = 3, mission_points = 0, mission_minus = 0, mission_gate = 0;
                 mvwprintw(mission_Board, 5, 2, "G : 2 ( )", pass_char);
                 for (int i = 0; i < 30; i++) {
@@ -555,15 +556,12 @@ void snakeclass::pass_Mission() {
             }
             break;
         case 3:
-            mvwprintw(mission_Board, 2, 2, "B : 9 (%d) ", snake.size());
-            mvwprintw(mission_Board, 3, 2, "+ : 5 (%d) ", mission_points);
-            mvwprintw(mission_Board, 4, 2, "- : 4 (%d) ", mission_minus);
-            mvwprintw(mission_Board, 5, 2, "G : 3 ( )");
+            mvwprintw(mission_Board, 2, 2, "B : 5 (%d) ", snake.size());
+            mvwprintw(mission_Board, 3, 2, "+ : 1 (%d) ", mission_points);
+            mvwprintw(mission_Board, 4, 2, "- : 1 (%d) ", mission_minus);
+            mvwprintw(mission_Board, 5, 2, "G : 0 (%c)", pass_char);
 
-            if (mission_gate >= 3) {
-                mvwprintw(mission_Board, 5, 2, "G : 3 (%c)", pass_char);
-            }
-            if (snake.size() >= 9 && mission_points >= 5 && mission_minus >= 4 && mission_gate >= 3) {
+            if (snake.size() >= 5 && mission_points >= 1 && mission_minus >= 1) {
                 game_complete = true;
                 break;
             }
