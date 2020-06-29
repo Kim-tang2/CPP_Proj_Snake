@@ -14,4 +14,7 @@ Ncurses 라이브러리 설치는 [here](https://google.com)에 물어보세요 
 g++ snake.cpp main.cpp -lncurses
 ./a.out
 ```
+## 게임 화면
+![캡처](https://user-images.githubusercontent.com/25794831/86028253-a4107e00-ba6c-11ea-86d2-acf9fc3e1fd4.png)
+
 재미있게 즐기세요 ^^
